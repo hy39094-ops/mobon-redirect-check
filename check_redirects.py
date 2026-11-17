@@ -6,8 +6,9 @@
   python check_redirects.py --priority 1                      # 1등급만
 
 판정 (리다이렉트를 끝까지 따라가서 도착한 페이지 기준):
-  FAIL : 도착 페이지가 4xx/5xx 이거나 접속 자체가 안 됨 (인증서 오류, DNS 오류 등)
-  WARN : 정상 도착(2xx/3xx)했지만 기대한 주소(to/final)와 다른 곳에 도착함
+  FAIL : 도착 페이지가 4xx/5xx 이거나 접속 자체가 안 됨 (DNS 오류, 타임아웃 등)
+  WARN : 정상 도착(2xx/3xx)했지만 기대한 주소(to/final)와 다른 곳에 도착함,
+         또는 중간에 인증서 오류가 있음 (인증서 검사 없이 이동은 끝까지 확인한다)
   PASS : 정상 도착했고 기대한 주소로 도착함 (첫 응답이 200/301/302 어느 것이든 성공)
   첫 응답 코드(status)는 기록만 하고 판정에는 쓰지 않는다.
 
@@ -20,6 +21,7 @@
 import argparse
 import csv
 import os
+import ssl
 import sys
 from datetime import datetime, timedelta, timezone
 import urllib.error
@@ -39,25 +41,37 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 NO_FOLLOW = urllib.request.build_opener(NoRedirect)
+_insecure_ctx = ssl.create_default_context()
+_insecure_ctx.check_hostname = False
+_insecure_ctx.verify_mode = ssl.CERT_NONE
+NO_FOLLOW_INSECURE = urllib.request.build_opener(NoRedirect, urllib.request.HTTPSHandler(context=_insecure_ctx))
+
+# 인증서 오류가 난 호스트 → 이유. 브라우저라면 경고가 뜨는 곳이라 WARN 으로 표시한다.
+CERT_ISSUES = {}
 
 
 def first_hop(url):
-    """리다이렉트를 따라가지 않고 (코드, Location) 반환. 접속 실패는 ('ERR 이유', '')."""
+    """리다이렉트를 따라가지 않고 (코드, Location) 반환. 접속 실패는 ('ERR 이유', '').
+    인증서 오류는 기록해 두고, 인증서 검사 없이 다시 요청해서 이동은 계속 확인한다."""
     req = urllib.request.Request(url, headers={"User-Agent": UA})
-    try:
-        r = NO_FOLLOW.open(req, timeout=20)
-        return r.status, ""
-    except urllib.error.HTTPError as e:
-        return e.code, e.headers.get("Location", "") or ""
-    except urllib.error.URLError as e:
-        reason = str(e.reason)
-        if "CERTIFICATE_VERIFY_FAILED" in reason:
-            return "ERR 인증서 오류(" + ("호스트 불일치" if "Hostname mismatch" in reason else "검증 실패") + ")", ""
-        if "getaddrinfo" in reason or "Name or service" in reason:
-            return "ERR 도메인 못 찾음", ""
-        return f"ERR {reason[:60]}", ""
-    except Exception as e:  # noqa: BLE001
-        return f"ERR {type(e).__name__}", ""
+    for opener in (NO_FOLLOW, NO_FOLLOW_INSECURE):
+        try:
+            r = opener.open(req, timeout=20)
+            return r.status, ""
+        except urllib.error.HTTPError as e:
+            return e.code, e.headers.get("Location", "") or ""
+        except urllib.error.URLError as e:
+            reason = str(e.reason)
+            if "CERTIFICATE_VERIFY_FAILED" in reason and opener is NO_FOLLOW:
+                host = urllib.parse.urlsplit(url).hostname
+                CERT_ISSUES[host] = "인증서 오류(" + ("이 주소용 인증서 아님" if "Hostname mismatch" in reason else "검증 실패") + ")"
+                continue
+            if "getaddrinfo" in reason or "Name or service" in reason:
+                return "ERR 도메인 못 찾음", ""
+            return f"ERR {reason[:60]}", ""
+        except Exception as e:  # noqa: BLE001
+            return f"ERR {type(e).__name__}", ""
+    return "ERR 접속 실패", ""
 
 
 def follow(url, max_hops=10):
@@ -151,6 +165,7 @@ def main():
         to = swap(c["to"]) if "to" in c else None
         final = swap(c["final"]) if "final" in c else None
 
+        CERT_ISSUES.clear()
         code, loc = first_hop(url)
         fcode, furl, codes, path = follow(url)
 
@@ -168,6 +183,10 @@ def main():
                 if not same(loc_abs, to):
                     result = "WARN"
                     problems.append(f"이동 주소 {loc or '(이동 없음)'} (기대 {to})")
+        for host, why in CERT_ISSUES.items():
+            if result == "PASS":
+                result = "WARN"
+            problems.append(f"{host}: {why}, 브라우저 경고 발생")
         count[result] += 1
 
         rows.append({
