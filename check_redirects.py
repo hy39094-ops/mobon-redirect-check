@@ -7,8 +7,8 @@
 
 판정 (리다이렉트를 끝까지 따라가서 도착한 페이지 기준):
   FAIL : 도착 페이지가 4xx/5xx 이거나 접속 자체가 안 됨 (DNS 오류, 타임아웃 등)
-  WARN : 정상 도착(2xx/3xx)했지만 기대한 주소(to/final)와 다른 곳에 도착함,
-         또는 중간에 인증서 오류가 있음 (인증서 검사 없이 이동은 끝까지 확인한다)
+  참고 : 정상 도착했지만 기대한 주소와 다른 곳에 도착했거나 인증서 경고가 있으면 PASS 로 두고
+         '이동' 칸을 X 로, 사유·참고 칸에 내용을 적는다 (인증서 검사 없이 이동은 끝까지 확인한다)
   PASS : 정상 도착했고 기대한 주소로 도착함 (첫 응답이 200/301/302 어느 것이든 성공)
   첫 응답 코드(status)는 기록만 하고 판정에는 쓰지 않는다.
 
@@ -16,7 +16,7 @@
   to / final 이 '/경로' 처럼 상대 주소면 → 경로+쿼리만 비교
   to / final 이 'https://...' 처럼 전체 주소면 → 프로토콜·호스트까지 전부 비교 (http→https 전환 확인용)
 
-결과: 콘솔 + result.csv. FAIL 이 하나라도 있으면 종료 코드 1 (WARN 만 있으면 0).
+결과: 콘솔 + result.csv. FAIL 이 하나라도 있으면 종료 코드 1.
 """
 import argparse
 import csv
@@ -46,7 +46,7 @@ _insecure_ctx.check_hostname = False
 _insecure_ctx.verify_mode = ssl.CERT_NONE
 NO_FOLLOW_INSECURE = urllib.request.build_opener(NoRedirect, urllib.request.HTTPSHandler(context=_insecure_ctx))
 
-# 인증서 오류가 난 호스트 → 이유. 브라우저라면 경고가 뜨는 곳이라 WARN 으로 표시한다.
+# 인증서 오류가 난 호스트 → 이유. 브라우저라면 경고가 뜨는 곳이라 참고 칸에 적는다.
 CERT_ISSUES = {}
 
 
@@ -153,20 +153,20 @@ def short_codes(codes):
 
 def write_report(rows, count, target, started):
     """시트 형태의 결과 문서(report.md)를 만들고, GitHub Actions 에서는 실행 화면 Summary 에도 붙인다."""
-    icon = {"PASS": "✅ PASS", "WARN": "⚠️ WARN", "FAIL": "❌ FAIL"}
+    icon = {"PASS": "✅ PASS", "FAIL": "❌ FAIL"}
     lines = [
         "# 리다이렉트 검사 결과",
         "",
         f"- 실행 시각: {started} (KST)",
         f"- 대상: `{target}`",
-        f"- 결과: **PASS {count['PASS']} / WARN {count['WARN']} / FAIL {count['FAIL']}** (총 {len(rows)}건)",
-        "- 판정: 도착 페이지가 4xx·5xx·접속 오류면 FAIL, 정상 도착했지만 기대 주소와 다르면 WARN",
+        f"- 결과: **PASS {count['PASS']} / FAIL {count['FAIL']}** (총 {len(rows)}건)",
+        "- 판정: 도착 페이지가 정상(200·301·302 등)이면 PASS, 4xx·5xx·접속 오류면 FAIL. 이동 = 기대 주소로 갔는지(O/X)",
         "",
         "| 결과 | No. | 접속 주소 | 기대 결과 | 응답 코드 | 실제 도착 주소 | 이동 |",
         "|---|---|---|---|---|---|---|",
     ]
     for r in rows:
-        moved = "-" if not r["expected"] else ("O" if r["result"] == "PASS" else "X")
+        moved = r["moved"]
         lines.append("| " + " | ".join((
             icon[r["result"]],
             md(r["no"]),
@@ -177,12 +177,13 @@ def write_report(rows, count, target, started):
             moved,
         )) + " |")
 
-    issues = [r for r in rows if r["result"] != "PASS"]
+    issues = [r for r in rows if r["problem"]]
     if issues:
-        lines += ["", "## 확인 필요 (WARN / FAIL 사유)", ""]
+        lines += ["", "## 확인 필요 (FAIL 사유 · 참고)", ""]
         for r in issues:
             head = f"No.{r['no']} " if r["no"] else ""
-            lines.append(f"- **{r['result']}** {head}{md(r['name'])}: {md(r['problem'])}")
+            label = "FAIL" if r["result"] == "FAIL" else "참고"
+            lines.append(f"- **{label}** {head}{md(r['name'])}: {md(r['problem'])}")
     lines += ["", "응답 코드 예: `301 → 200` = 처음 301 로 이동한 뒤 도착 페이지에서 200"]
     pages = os.environ.get("REPORT_PAGE_URL")
     if pages:
@@ -207,8 +208,8 @@ def write_html(rows, count, target, started):
 
     trs = []
     for r in rows:
-        moved = "-" if not r["expected"] else ("O" if r["result"] == "PASS" else "X")
-        reason = escape_attr = e(r["problem"]) if r["result"] != "PASS" else ""
+        moved = r["moved"]
+        reason = e(r["problem"])
         trs.append(
             f'<tr class="{r["result"].lower()}">'
             f'<td><span class="badge {r["result"].lower()}">{r["result"]}</span></td>'
@@ -260,21 +261,20 @@ td.reason {{ color:var(--muted); font-size:12.5px; min-width:180px }}
   <div class="meta">
     <span>실행 <b>{e(started)}</b> (KST)</span>
     <span>대상 <b>{e(target)}</b></span>
-    <span>PASS <b>{count['PASS']}</b> · WARN <b>{count['WARN']}</b> · FAIL <b>{count['FAIL']}</b> / 총 {len(rows)}건</span>
+    <span>PASS <b>{count['PASS']}</b> · FAIL <b>{count['FAIL']}</b> / 총 {len(rows)}건</span>
   </div>
   <div class="filters" role="group" aria-label="결과 필터">
     <button data-f="all" aria-pressed="true">전체</button>
     <button data-f="fail" aria-pressed="false">FAIL</button>
-    <button data-f="warn" aria-pressed="false">WARN</button>
     <button data-f="pass" aria-pressed="false">PASS</button>
   </div>
 </header>
 <div class="wrap"><div class="scroll"><table>
-<thead><tr><th>결과</th><th>No.</th><th>접속 주소</th><th>기대 결과</th><th>응답 코드</th><th>실제 도착 주소</th><th>이동</th><th>사유</th></tr></thead>
+<thead><tr><th>결과</th><th>No.</th><th>접속 주소</th><th>기대 결과</th><th>응답 코드</th><th>실제 도착 주소</th><th>이동</th><th>사유·참고</th></tr></thead>
 <tbody>
 {chr(10).join(trs)}
 </tbody></table></div>
-<p class="meta">판정: 도착 페이지가 4xx·5xx·접속 오류면 FAIL, 정상 도착했지만 기대 주소와 다르면 WARN. 응답 코드 예: 301 → 200</p>
+<p class="meta">판정: 도착 페이지가 정상(200·301·302 등)이면 PASS, 4xx·5xx·접속 오류면 FAIL. 이동 = 기대 주소로 갔는지(O/X). 응답 코드 예: 301 → 200</p>
 </div>
 <script>
 document.querySelectorAll('.filters button').forEach(b => b.addEventListener('click', () => {{
@@ -319,7 +319,7 @@ def main():
 
     started = datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d %H:%M:%S")
     rows = []
-    count = {"PASS": 0, "WARN": 0, "FAIL": 0}
+    count = {"PASS": 0, "FAIL": 0}
     for c in spec["cases"]:
         if args.priority and c.get("priority", 1) > args.priority:
             continue
@@ -332,23 +332,25 @@ def main():
         code, loc = first_hop(url)
         fcode, furl, codes, path = follow(url)
 
+        # 판정: 도착 페이지가 정상(2xx/3xx)이면 PASS, 4xx/5xx·접속 오류면 FAIL.
+        # 기대 주소와 다른 곳에 도착했거나 인증서 경고가 있으면 PASS 로 두고 '참고'에만 적는다.
         problems = []
+        moved_ok = None  # 기대 주소가 있을 때 그 주소로 갔는지 (O/X 표시용)
         if not isinstance(fcode, int) or fcode >= 400:
             result = "FAIL"
             problems.append(f"도착 실패: {fcode}")
         else:
             result = "PASS"
-            if final is not None and not same(furl, final):
-                result = "WARN"
-                problems.append(f"도착 주소 {furl} (기대 {final})")
-            elif final is None and to is not None:
-                loc_abs = urllib.parse.urljoin(url, loc) if loc else url
-                if not same(loc_abs, to):
-                    result = "WARN"
-                    problems.append(f"이동 주소 {loc or '(이동 없음)'} (기대 {to})")
+        if final is not None:
+            moved_ok = same(furl, final)
+            if result == "PASS" and not moved_ok:
+                problems.append(f"기대와 다른 주소에 도착 (기대 {final})")
+        elif to is not None:
+            loc_abs = urllib.parse.urljoin(url, loc) if loc else url
+            moved_ok = same(loc_abs, to)
+            if result == "PASS" and not moved_ok:
+                problems.append(f"이동 주소 {loc or '(이동 없음)'} (기대 {to})")
         for host, why in CERT_ISSUES.items():
-            if result == "PASS":
-                result = "WARN"
             problems.append(f"{host}: {why}, 브라우저 경고 발생")
         count[result] += 1
 
@@ -365,12 +367,13 @@ def main():
             "codes": codes,
             "path": path,
             "expected": final or to or "",
+            "moved": "-" if moved_ok is None else ("O" if moved_ok else "X"),
             "problem": "; ".join(problems),
             "note": c.get("note", ""),
         })
         tag = f"#{c['sheet_no']} " if c.get("sheet_no") else ""
         print(f"[{result}] P{c.get('priority', 1)} {tag}{c['name']}: {codes}  {furl}"
-              + ("" if result == "PASS" else f"\n        !! {'; '.join(problems)}"))
+              + (f"\n        {'!!' if result == 'FAIL' else '참고'} {'; '.join(problems)}" if problems else ""))
 
     out = Path(__file__).with_name("result.csv")
     with out.open("w", newline="", encoding="utf-8-sig") as f:
@@ -378,7 +381,7 @@ def main():
         w.writeheader()
         w.writerows(rows)
     report = write_report(rows, count, new_base, started)
-    print(f"\n대상 {new_base}  총 {len(rows)}건  PASS {count['PASS']} / WARN {count['WARN']} / FAIL {count['FAIL']}  -> {out}, {report}")
+    print(f"\n대상 {new_base}  총 {len(rows)}건  PASS {count['PASS']} / FAIL {count['FAIL']}  -> {out}, {report}")
     sys.exit(1 if count["FAIL"] else 0)
 
 
