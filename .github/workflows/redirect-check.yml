@@ -40,5 +40,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: redirect-result
-          path: result.csv
+          path: |
+            report.md
+            result.csv
           retention-days: 3

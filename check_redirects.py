@@ -19,7 +19,9 @@
 """
 import argparse
 import csv
+import os
 import sys
+from datetime import datetime, timedelta, timezone
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -59,16 +61,56 @@ def first_hop(url):
 
 
 def follow(url, max_hops=10):
-    """리다이렉트를 끝까지 따라가 (최종 코드, 최종 URL, 이동 경로 문자열) 반환."""
-    steps = []
+    """리다이렉트를 끝까지 따라가 (최종 코드, 최종 URL, 코드 경로, 상세 경로) 반환.
+    코드 경로 예: '301 → 200' / 상세 경로 예: '301 → /support/notice_list → 200'"""
+    codes, detail = [], []
     for _ in range(max_hops):
         code, loc = first_hop(url)
-        steps.append(str(code))
+        codes.append(str(code))
+        detail.append(str(code))
         if code in REDIRECT and loc:
+            detail.append(loc)
             url = urllib.parse.urljoin(url, loc)
             continue
-        return code, url, " → ".join(steps)
-    return "LOOP", url, " → ".join(steps)
+        return code, url, " → ".join(codes), " → ".join(detail)
+    return "LOOP", url, " → ".join(codes), " → ".join(detail)
+
+
+def md(s):
+    """마크다운 표 칸에 넣을 수 있게 | 와 줄바꿈을 정리."""
+    return str(s).replace("|", "\\|").replace("\n", " ")
+
+
+def write_report(rows, count, target, started):
+    """시트 형태의 결과 문서(report.md)를 만들고, GitHub Actions 에서는 실행 화면 Summary 에도 붙인다."""
+    icon = {"PASS": "✅ PASS", "WARN": "⚠️ WARN", "FAIL": "❌ FAIL"}
+    lines = [
+        "# 리다이렉트 검사 결과",
+        "",
+        f"- 실행 시각: {started} (KST)",
+        f"- 대상: `{target}`",
+        f"- 결과: **PASS {count['PASS']} / WARN {count['WARN']} / FAIL {count['FAIL']}** (총 {len(rows)}건)",
+        "- 판정: 도착 페이지가 4xx·5xx·접속 오류면 FAIL, 정상 도착했지만 기대 주소와 다르면 WARN",
+        "",
+        "| No. | 등급 | 접속 주소 (Test step) | 기대 결과 (이동할 주소) | 응답 코드 흐름 | 실제 도착 주소 | 기대 주소로 이동 | 결과 | 비고 |",
+        "|---|---|---|---|---|---|---|---|---|",
+    ]
+    for r in rows:
+        moved = "-" if not r["expected"] else ("O" if r["result"] == "PASS" else "X")
+        note = "; ".join(x for x in (r["problem"], r["note"]) if x)
+        lines.append("| " + " | ".join(md(x) for x in (
+            r["no"], r["priority"], r["from"], r["expected"] or "(정상 응답)", r["path"],
+            r["final_url"], moved, icon[r["result"]], note,
+        )) + " |")
+    lines += ["", "응답 코드 흐름 예: `301 → /support/notice_list → 200` = 처음 301 로 /support/notice_list 로 이동했고, 거기서 200 응답"]
+    text = "\n".join(lines) + "\n"
+    out = Path(__file__).with_name("report.md")
+    out.write_text(text, encoding="utf-8")
+    summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary:
+        with open(summary, "a", encoding="utf-8") as f:
+            f.write(text)
+    return out
 
 
 def same(actual_abs, expected):
@@ -98,6 +140,7 @@ def main():
         s = str(s)
         return new_base + s[len(base):] if s.startswith(base) else s
 
+    started = datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d %H:%M:%S")
     rows = []
     count = {"PASS": 0, "WARN": 0, "FAIL": 0}
     for c in spec["cases"]:
@@ -109,7 +152,7 @@ def main():
         final = swap(c["final"]) if "final" in c else None
 
         code, loc = first_hop(url)
-        fcode, furl, path = follow(url)
+        fcode, furl, codes, path = follow(url)
 
         problems = []
         if not isinstance(fcode, int) or fcode >= 400:
@@ -129,7 +172,7 @@ def main():
 
         rows.append({
             "result": result,
-            "no": c.get("no", ""),
+            "no": c.get("sheet_no", ""),
             "priority": c.get("priority", 1),
             "name": c["name"],
             "from": url,
@@ -142,8 +185,8 @@ def main():
             "problem": "; ".join(problems),
             "note": c.get("note", ""),
         })
-        tag = f"#{c['no']} " if c.get("no") else ""
-        print(f"[{result}] P{c.get('priority', 1)} {tag}{c['name']}: {path}  {furl}"
+        tag = f"#{c['sheet_no']} " if c.get("sheet_no") else ""
+        print(f"[{result}] P{c.get('priority', 1)} {tag}{c['name']}: {codes}  {furl}"
               + ("" if result == "PASS" else f"\n        !! {'; '.join(problems)}"))
 
     out = Path(__file__).with_name("result.csv")
@@ -151,7 +194,8 @@ def main():
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()) if rows else ["result"])
         w.writeheader()
         w.writerows(rows)
-    print(f"\n대상 {new_base}  총 {len(rows)}건  PASS {count['PASS']} / WARN {count['WARN']} / FAIL {count['FAIL']}  -> {out}")
+    report = write_report(rows, count, new_base, started)
+    print(f"\n대상 {new_base}  총 {len(rows)}건  PASS {count['PASS']} / WARN {count['WARN']} / FAIL {count['FAIL']}  -> {out}, {report}")
     sys.exit(1 if count["FAIL"] else 0)
 
 

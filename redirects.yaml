@@ -2,7 +2,7 @@
 # 출처: 리다이렉트 테스트 시트의 Test step&action 주소 (no = 시트 번호)
 #
 # 각 케이스:
-#   no:       시트 번호
+#   sheet_no: 시트 번호
 #   name:     케이스 이름
 #   from:     접속할 전체 주소
 #   status:   첫 응답에서 기대하는 코드 (301 / 302 / 200 ...)
@@ -20,47 +20,47 @@ defaults:
 
 cases:
   # ── 메인 ─────────────────────────────────────────────
-  - { no: 1, name: 메인 /main/m2/ → / 301, from: https://web-master.mobon.net/main/m2/, status: 301, to: /, final: https://web-master.mobon.net/, priority: 1 }
-  - { no: 2, name: http 접속 → https 메인, from: http://web-master.mobon.net/main/m2/, status: 301, final: https://web-master.mobon.net/, priority: 1, note: "시트 기대: http→https 전환 포함" }
-  - { no: 3, name: www 붙은 주소 → 메인, from: https://www.web-master.mobon.net/main/m2/, status: 301, final: https://web-master.mobon.net/, priority: 2, note: www.web-master 도메인 }
-  - { no: 4, name: 끝 슬래시 없는 /main/m2, from: https://web-master.mobon.net/main/m2, status: 301, to: /, final: https://web-master.mobon.net/, priority: 1 }
-  - { no: 5, name: 파일명 포함 index.html, from: https://web-master.mobon.net/main/m2/index.html, status: 301, final: https://web-master.mobon.net/, priority: 2 }
-  - { no: 6, name: 쿼리 유지(utm), from: "https://web-master.mobon.net/main/m2/?utm_source=naver&utm_medium=cpc", status: 301, to: "/?utm_source=naver&utm_medium=cpc", final: "https://web-master.mobon.net/?utm_source=naver&utm_medium=cpc", priority: 1 }
-  - { no: 7, name: 신규 메인 직접 접속, from: https://web-master.mobon.net/, status: 200, priority: 1 }
-  - { no: 62, name: index.php 링크(카톡 등), from: https://web-master.mobon.net/main/m2/index.php, status: 301, to: /, final: https://web-master.mobon.net/, priority: 1 }
-  - { no: 60, name: 네이버 브랜드검색 유입(긴 쿼리), from: "https://web-master.mobon.net/main/m2/?n_media=27758&n_query=%EB%AA%A8%EB%B9%84%EC%98%A8&n_rank=1&n_ad_group=grp-a001-04-000000071351454&n_ad=nad-a001-04-000000564186750&n_keyword_id=nkw-a001-04-000008468967150&n_keyword=%EB%AA%A8%EB%B9%84%EC%98%A8&n_campaign_type=4&n_contract=tct-a001-04-000000001333163&n_ad_group_type=5&NaPm=ct%3Dmtgqudz6%7Cci%3DER326812d7%2Da4f5%2D11f1%2Da98e%2D3ef43d3dbc8f%7Ctr%3Dbrnd%7Chk%3D9e44bc5d36ae401001461b2954b2eb6f0f63fc01%7Cnacn%3Dv556BMBcW1ZZ", status: 301, to: "/?n_media=27758&n_query=%EB%AA%A8%EB%B9%84%EC%98%A8&n_rank=1&n_ad_group=grp-a001-04-000000071351454&n_ad=nad-a001-04-000000564186750&n_keyword_id=nkw-a001-04-000008468967150&n_keyword=%EB%AA%A8%EB%B9%84%EC%98%A8&n_campaign_type=4&n_contract=tct-a001-04-000000001333163&n_ad_group_type=5&NaPm=ct%3Dmtgqudz6%7Cci%3DER326812d7%2Da4f5%2D11f1%2Da98e%2D3ef43d3dbc8f%7Ctr%3Dbrnd%7Chk%3D9e44bc5d36ae401001461b2954b2eb6f0f63fc01%7Cnacn%3Dv556BMBcW1ZZ", priority: 1, note: 광고 유입 파라미터가 그대로 유지돼야 함 }
+  - { sheet_no: 1, name: 메인 /main/m2/ → / 301, from: https://web-master.mobon.net/main/m2/, status: 301, to: /, final: https://web-master.mobon.net/, priority: 1 }
+  - { sheet_no: 2, name: http 접속 → https 메인, from: http://web-master.mobon.net/main/m2/, status: 301, final: https://web-master.mobon.net/, priority: 1, note: "시트 기대: http→https 전환 포함" }
+  - { sheet_no: 3, name: www 붙은 주소 → 메인, from: https://www.web-master.mobon.net/main/m2/, status: 301, final: https://web-master.mobon.net/, priority: 2, note: www.web-master 도메인 }
+  - { sheet_no: 4, name: 끝 슬래시 없는 /main/m2, from: https://web-master.mobon.net/main/m2, status: 301, to: /, final: https://web-master.mobon.net/, priority: 1 }
+  - { sheet_no: 5, name: 파일명 포함 index.html, from: https://web-master.mobon.net/main/m2/index.html, status: 301, final: https://web-master.mobon.net/, priority: 2 }
+  - { sheet_no: 6, name: 쿼리 유지(utm), from: "https://web-master.mobon.net/main/m2/?utm_source=naver&utm_medium=cpc", status: 301, to: "/?utm_source=naver&utm_medium=cpc", final: "https://web-master.mobon.net/?utm_source=naver&utm_medium=cpc", priority: 1 }
+  - { sheet_no: 7, name: 신규 메인 직접 접속, from: https://web-master.mobon.net/, status: 200, priority: 1 }
+  - { sheet_no: 62, name: index.php 링크(카톡 등), from: https://web-master.mobon.net/main/m2/index.php, status: 301, to: /, final: https://web-master.mobon.net/, priority: 1 }
+  - { sheet_no: 60, name: 네이버 브랜드검색 유입(긴 쿼리), from: "https://web-master.mobon.net/main/m2/?n_media=27758&n_query=%EB%AA%A8%EB%B9%84%EC%98%A8&n_rank=1&n_ad_group=grp-a001-04-000000071351454&n_ad=nad-a001-04-000000564186750&n_keyword_id=nkw-a001-04-000008468967150&n_keyword=%EB%AA%A8%EB%B9%84%EC%98%A8&n_campaign_type=4&n_contract=tct-a001-04-000000001333163&n_ad_group_type=5&NaPm=ct%3Dmtgqudz6%7Cci%3DER326812d7%2Da4f5%2D11f1%2Da98e%2D3ef43d3dbc8f%7Ctr%3Dbrnd%7Chk%3D9e44bc5d36ae401001461b2954b2eb6f0f63fc01%7Cnacn%3Dv556BMBcW1ZZ", status: 301, to: "/?n_media=27758&n_query=%EB%AA%A8%EB%B9%84%EC%98%A8&n_rank=1&n_ad_group=grp-a001-04-000000071351454&n_ad=nad-a001-04-000000564186750&n_keyword_id=nkw-a001-04-000008468967150&n_keyword=%EB%AA%A8%EB%B9%84%EC%98%A8&n_campaign_type=4&n_contract=tct-a001-04-000000001333163&n_ad_group_type=5&NaPm=ct%3Dmtgqudz6%7Cci%3DER326812d7%2Da4f5%2D11f1%2Da98e%2D3ef43d3dbc8f%7Ctr%3Dbrnd%7Chk%3D9e44bc5d36ae401001461b2954b2eb6f0f63fc01%7Cnacn%3Dv556BMBcW1ZZ", priority: 1, note: 광고 유입 파라미터가 그대로 유지돼야 함 }
 
   # ── 메뉴 (.php → 새 경로) ─────────────────────────────
-  - { no: 10, name: 공지 목록,       from: https://web-master.mobon.net/main/m2/support/notice_list.php,    status: 301, to: /support/notice_list,    final: https://web-master.mobon.net/support/notice_list,    priority: 1 }
-  - { no: 11, name: 디스플레이,      from: https://web-master.mobon.net/main/m2/service/mobon_display.php,  status: 301, to: /service/mobon_display,  final: https://web-master.mobon.net/service/mobon_display,  priority: 1 }
-  - { no: 12, name: 검색,            from: https://web-master.mobon.net/main/m2/service/mobon_search.php,   status: 301, to: /service/mobon_search,   final: https://web-master.mobon.net/service/mobon_search,   priority: 1 }
-  - { no: 13, name: 인사이트(상품),  from: https://web-master.mobon.net/main/m2/service/mobon_insite.php,   status: 301, to: /service/mobon_insite,   final: https://web-master.mobon.net/service/mobon_insite,   priority: 1 }
-  - { no: 14, name: 회사소개,        from: https://web-master.mobon.net/main/m2/company/introduce.php,      status: 301, to: /company/introduce,      final: https://web-master.mobon.net/company/introduce,      priority: 1 }
-  - { no: 15, name: 성공사례,        from: https://web-master.mobon.net/main/m2/business/case.php,          status: 301, to: /business/case,          final: https://web-master.mobon.net/business/case,          priority: 1 }
-  - { no: 16, name: 가입완료 직접 접근, from: https://web-master.mobon.net/main/m2/membership/complete_join.php, status: 301, to: /membership/complete_join, final: https://web-master.mobon.net/membership/complete_join, priority: 2, note: "가입 안 한 상태 직접 접근 시 오류 없이 처리(화면 확인은 수동)" }
-  - { no: 18, name: 교육 목록,       from: https://web-master.mobon.net/main/m2/support/edu_list.php,       status: 301, to: /support/edu_list,       final: https://web-master.mobon.net/support/edu_list,       priority: 1 }
-  - { no: 19, name: 가이드,          from: https://web-master.mobon.net/main/m2/support/guide.php,          status: 301, to: /support/guide,          final: https://web-master.mobon.net/support/guide,          priority: 1 }
-  - { no: 20, name: 광고문의,        from: https://web-master.mobon.net/main/m2/support/contact.php,        status: 301, to: /support/contact,        final: https://web-master.mobon.net/support/contact,        priority: 1 }
-  - { no: 21, name: 광고문의 안내,   from: https://web-master.mobon.net/main/m2/support/contact_intro.php,  status: 301, to: /support/contact_intro,  final: https://web-master.mobon.net/support/contact_intro,  priority: 1 }
-  - { no: 22, name: 블로그 인사이트, from: https://web-master.mobon.net/main/m2/blog/insight.php,           status: 301, to: /blog/insight,           final: https://web-master.mobon.net/blog/insight,           priority: 2 }
-  - { no: 23, name: 블로그 수상,     from: https://web-master.mobon.net/main/m2/blog/awards.php,            status: 301, to: /blog/awards,            final: https://web-master.mobon.net/blog/awards,            priority: 2 }
-  - { no: 24, name: 블로그 보도자료, from: https://web-master.mobon.net/main/m2/blog/press.php,             status: 301, to: /blog/press,             final: https://web-master.mobon.net/blog/press,             priority: 2 }
-  - { no: 25, name: 모비튠,          from: https://web-master.mobon.net/main/m2/partner/partner_mobtune.php, status: 301, to: /partner/partner_mobtune, final: https://web-master.mobon.net/partner/partner_mobtune, priority: 1 }
+  - { sheet_no: 10, name: 공지 목록,       from: https://web-master.mobon.net/main/m2/support/notice_list.php,    status: 301, to: /support/notice_list,    final: https://web-master.mobon.net/support/notice_list,    priority: 1 }
+  - { sheet_no: 11, name: 디스플레이,      from: https://web-master.mobon.net/main/m2/service/mobon_display.php,  status: 301, to: /service/mobon_display,  final: https://web-master.mobon.net/service/mobon_display,  priority: 1 }
+  - { sheet_no: 12, name: 검색,            from: https://web-master.mobon.net/main/m2/service/mobon_search.php,   status: 301, to: /service/mobon_search,   final: https://web-master.mobon.net/service/mobon_search,   priority: 1 }
+  - { sheet_no: 13, name: 인사이트(상품),  from: https://web-master.mobon.net/main/m2/service/mobon_insite.php,   status: 301, to: /service/mobon_insite,   final: https://web-master.mobon.net/service/mobon_insite,   priority: 1 }
+  - { sheet_no: 14, name: 회사소개,        from: https://web-master.mobon.net/main/m2/company/introduce.php,      status: 301, to: /company/introduce,      final: https://web-master.mobon.net/company/introduce,      priority: 1 }
+  - { sheet_no: 15, name: 성공사례,        from: https://web-master.mobon.net/main/m2/business/case.php,          status: 301, to: /business/case,          final: https://web-master.mobon.net/business/case,          priority: 1 }
+  - { sheet_no: 16, name: 가입완료 직접 접근, from: https://web-master.mobon.net/main/m2/membership/complete_join.php, status: 301, to: /membership/complete_join, final: https://web-master.mobon.net/membership/complete_join, priority: 2, note: "가입 안 한 상태 직접 접근 시 오류 없이 처리(화면 확인은 수동)" }
+  - { sheet_no: 18, name: 교육 목록,       from: https://web-master.mobon.net/main/m2/support/edu_list.php,       status: 301, to: /support/edu_list,       final: https://web-master.mobon.net/support/edu_list,       priority: 1 }
+  - { sheet_no: 19, name: 가이드,          from: https://web-master.mobon.net/main/m2/support/guide.php,          status: 301, to: /support/guide,          final: https://web-master.mobon.net/support/guide,          priority: 1 }
+  - { sheet_no: 20, name: 광고문의,        from: https://web-master.mobon.net/main/m2/support/contact.php,        status: 301, to: /support/contact,        final: https://web-master.mobon.net/support/contact,        priority: 1 }
+  - { sheet_no: 21, name: 광고문의 안내,   from: https://web-master.mobon.net/main/m2/support/contact_intro.php,  status: 301, to: /support/contact_intro,  final: https://web-master.mobon.net/support/contact_intro,  priority: 1 }
+  - { sheet_no: 22, name: 블로그 인사이트, from: https://web-master.mobon.net/main/m2/blog/insight.php,           status: 301, to: /blog/insight,           final: https://web-master.mobon.net/blog/insight,           priority: 2 }
+  - { sheet_no: 23, name: 블로그 수상,     from: https://web-master.mobon.net/main/m2/blog/awards.php,            status: 301, to: /blog/awards,            final: https://web-master.mobon.net/blog/awards,            priority: 2 }
+  - { sheet_no: 24, name: 블로그 보도자료, from: https://web-master.mobon.net/main/m2/blog/press.php,             status: 301, to: /blog/press,             final: https://web-master.mobon.net/blog/press,             priority: 2 }
+  - { sheet_no: 25, name: 모비튠,          from: https://web-master.mobon.net/main/m2/partner/partner_mobtune.php, status: 301, to: /partner/partner_mobtune, final: https://web-master.mobon.net/partner/partner_mobtune, priority: 1 }
 
   # ── 회원 ────────────────────────────────────────────
-  - { no: 30, name: 아이디 찾기,     from: "https://web-master.mobon.net/main/m2/membership/id_pw_find.php?type=id",   status: 301, to: "/membership/id_pw_find?type=id",   final: "https://web-master.mobon.net/membership/id_pw_find?type=id",   priority: 1 }
-  - { no: 34, name: 비밀번호 찾기,   from: "https://web-master.mobon.net/main/m2/membership/id_pw_find.php?type=pass", status: 301, to: "/membership/id_pw_find?type=pass", final: "https://web-master.mobon.net/membership/id_pw_find?type=pass", priority: 1 }
-  - { no: 42, name: 회원가입 1단계,  from: https://web-master.mobon.net/main/m2/membership/join_step1.php,   status: 301, to: /membership/join_step1,  final: https://web-master.mobon.net/membership/join_step1,  priority: 1, note: 시트 표기 (중요) }
-  - { no: 43, name: 광고주 회원가입, from: "https://web-master.mobon.net/main/m2/membership/join_step2.php?gubun=11",         status: 301, to: "/membership/join_step2?gubun=11",         final: "https://web-master.mobon.net/membership/join_step2?gubun=11",         priority: 1 }
-  - { no: 49, name: 대행사 회원가입, from: "https://web-master.mobon.net/main/m2/membership/join_step2.php?gubun=12&grade=2", status: 301, to: "/membership/join_step2?gubun=12&grade=2", final: "https://web-master.mobon.net/membership/join_step2?gubun=12&grade=2", priority: 1 }
-  - { no: 50, name: 가입완료 새 주소, from: https://web-master.mobon.net/membership/complete_join, status: 200, priority: 2 }
-  - { no: 36, name: 구 로그인 주소,  from: https://web-master.mobon.net/main/m2/membership/login.php, status: 301, to: /membership/login, final: https://web-master.mobon.net/, priority: 2, note: "301 → /membership/login → 302 → / (로그인은 SSO)" }
-  - { no: 53, name: 매체 회원가입,   from: https://mobsense.mobon.net/register, status: 200, priority: 2, note: 모비센스 }
+  - { sheet_no: 30, name: 아이디 찾기,     from: "https://web-master.mobon.net/main/m2/membership/id_pw_find.php?type=id",   status: 301, to: "/membership/id_pw_find?type=id",   final: "https://web-master.mobon.net/membership/id_pw_find?type=id",   priority: 1 }
+  - { sheet_no: 34, name: 비밀번호 찾기,   from: "https://web-master.mobon.net/main/m2/membership/id_pw_find.php?type=pass", status: 301, to: "/membership/id_pw_find?type=pass", final: "https://web-master.mobon.net/membership/id_pw_find?type=pass", priority: 1 }
+  - { sheet_no: 42, name: 회원가입 1단계,  from: https://web-master.mobon.net/main/m2/membership/join_step1.php,   status: 301, to: /membership/join_step1,  final: https://web-master.mobon.net/membership/join_step1,  priority: 1, note: 시트 표기 (중요) }
+  - { sheet_no: 43, name: 광고주 회원가입, from: "https://web-master.mobon.net/main/m2/membership/join_step2.php?gubun=11",         status: 301, to: "/membership/join_step2?gubun=11",         final: "https://web-master.mobon.net/membership/join_step2?gubun=11",         priority: 1 }
+  - { sheet_no: 49, name: 대행사 회원가입, from: "https://web-master.mobon.net/main/m2/membership/join_step2.php?gubun=12&grade=2", status: 301, to: "/membership/join_step2?gubun=12&grade=2", final: "https://web-master.mobon.net/membership/join_step2?gubun=12&grade=2", priority: 1 }
+  - { sheet_no: 50, name: 가입완료 새 주소, from: https://web-master.mobon.net/membership/complete_join, status: 200, priority: 2 }
+  - { sheet_no: 36, name: 구 로그인 주소,  from: https://web-master.mobon.net/main/m2/membership/login.php, status: 301, to: /membership/login, final: https://web-master.mobon.net/, priority: 2, note: "301 → /membership/login → 302 → / (로그인은 SSO)" }
+  - { sheet_no: 53, name: 매체 회원가입,   from: https://mobsense.mobon.net/register, status: 200, priority: 2, note: 모비센스 }
 
   # ── 브릿지(광고 랜딩) ────────────────────────────────
-  - { no: 61, name: 프로모션 브릿지(www), from: "https://www.web-master.mobon.net/bridge/marketing/?utm_source=naver&utm_medium=bs&utm_campaign=brand_ad_2_pc&utm_content=news", status: 200, priority: 2, note: www.web-master 도메인 }
-  - { no: 63, name: 브릿지,              from: https://web-master.mobon.net/bridge,  status: 200, priority: 1 }
-  - { no: 64, name: AI ASK 브릿지(시트 주소), from: https://web-master.mobon.net/aiask,     status: 200, priority: 2, note: "실제 페이지는 /bridge/aiask 로 보임. 시트 주소 확인 필요" }
-  - { no: 65, name: 마케팅 브릿지(시트 주소), from: https://web-master.mobon.net/marketing, status: 200, priority: 2, note: "실제 페이지는 /bridge/marketing 으로 보임. 시트 주소 확인 필요" }
+  - { sheet_no: 61, name: 프로모션 브릿지(www), from: "https://www.web-master.mobon.net/bridge/marketing/?utm_source=naver&utm_medium=bs&utm_campaign=brand_ad_2_pc&utm_content=news", status: 200, priority: 2, note: www.web-master 도메인 }
+  - { sheet_no: 63, name: 브릿지,              from: https://web-master.mobon.net/bridge,  status: 200, priority: 1 }
+  - { sheet_no: 64, name: AI ASK 브릿지(시트 주소), from: https://web-master.mobon.net/aiask,     status: 200, priority: 2, note: "실제 페이지는 /bridge/aiask 로 보임. 시트 주소 확인 필요" }
+  - { sheet_no: 65, name: 마케팅 브릿지(시트 주소), from: https://web-master.mobon.net/marketing, status: 200, priority: 2, note: "실제 페이지는 /bridge/marketing 으로 보임. 시트 주소 확인 필요" }
   - { name: AI ASK 브릿지,   from: https://web-master.mobon.net/bridge/aiask,     status: 200, priority: 1 }
   - { name: 마케팅 브릿지,   from: https://web-master.mobon.net/bridge/marketing, status: 200, priority: 1 }

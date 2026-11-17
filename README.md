@@ -30,7 +30,7 @@ python check_redirects.py --priority 1                      # 1등급만
 ## 케이스 추가
 
 ```yaml
-- { no: 10, name: 공지 목록, from: https://web-master.mobon.net/main/m2/support/notice_list.php, status: 301, to: /support/notice_list, final: https://web-master.mobon.net/support/notice_list, priority: 1 }
+- { sheet_no: 10, name: 공지 목록, from: https://web-master.mobon.net/main/m2/support/notice_list.php, status: 301, to: /support/notice_list, final: https://web-master.mobon.net/support/notice_list, priority: 1 }
 ```
 
 - `final`: 끝까지 따라갔을 때 도착해야 하는 주소. 전체 주소로 쓰면 http/https·호스트까지 비교

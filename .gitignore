@@ -1,4 +1,5 @@
 result.csv
+report.md
 .venv/
 __pycache__/
 .env
