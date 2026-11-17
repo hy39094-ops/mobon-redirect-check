@@ -1,0 +1,44 @@
+name: redirect-check
+
+on:
+  # 15분마다 자동 실행 (GitHub 사정으로 몇 분씩 늦게 시작될 수 있음)
+  schedule:
+    - cron: "*/15 * * * *"
+  # 수동 실행: Actions 탭 > redirect-check > Run workflow
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "검사할 사이트 주소 (예: https://www.mobon.net)"
+        required: true
+        default: "https://www.mobon.net"
+      priority:
+        description: "이 등급 이하만 실행 (1 / 2 / 3)"
+        required: true
+        default: "3"
+
+# 앞 실행이 안 끝났으면 겹쳐 돌리지 않는다
+concurrency:
+  group: redirect-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      # 자동 실행 때는 저장소 변수(Settings > Secrets and variables > Actions > Variables)의 값을 쓴다
+      BASE_URL: ${{ inputs.base_url || vars.BASE_URL || 'https://www.mobon.net' }}
+      PRIORITY: ${{ inputs.priority || vars.PRIORITY || '1' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python check_redirects.py --base-url "$BASE_URL" --priority "$PRIORITY"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: redirect-result
+          path: result.csv
+          retention-days: 3

@@ -1,0 +1,95 @@
+# 모비온 홈페이지 (구) 주소 → 신규 주소 리다이렉트 검사 케이스
+#
+# 각 케이스:
+#   name:     케이스 이름
+#   from:     (구) 주소 경로 (쿼리 포함 가능)
+#   status:   첫 응답에서 기대하는 코드 (301 / 302 / 200 ...)
+#   to:       첫 응답 Location 에 기대하는 주소 (리다이렉트일 때만)
+#   final:    (선택) 리다이렉트를 끝까지 따라갔을 때 도착해야 하는 경로
+#   priority: 1 = 필수, 2 = 세부, 3 = 여유 있을 때
+#   note:     (선택) 메모
+#
+# 대상: 실서버(www.mobon.net)의 메뉴에서 바로 열리는 (구) .php 주소
+# 규칙: /main/m2/{경로}.php → /{경로} 301, 쿼리 문자열은 그대로 유지
+
+defaults:
+  base_url: https://www.mobon.net   # 실행 시 --base-url 또는 환경변수 BASE_URL 로 덮어씀
+  final_status: 200
+
+cases:
+  # ── 메인 ─────────────────────────────────────────────
+  - { name: 메인 /main/m2,            from: /main/m2,            status: 301, to: /, priority: 1 }
+  - { name: 메인 /main/m2/,           from: /main/m2/,           status: 301, to: /, priority: 1 }
+  - { name: 메인 /main/m2/index.php,  from: /main/m2/index.php,  status: 301, to: /, priority: 1 }
+  - { name: 메인 index.php + 쿼리,     from: "/main/m2/index.php?lang=en", status: 301, to: "/?lang=en", priority: 2 }
+
+  # ── 주요특징 ─────────────────────────────────────────
+  - { name: 회사소개, from: /main/m2/company/introduce.php, status: 301, to: /company/introduce, priority: 1 }
+
+  # ── 광고상품 ─────────────────────────────────────────
+  - { name: 디스플레이, from: /main/m2/service/mobon_display.php, status: 301, to: /service/mobon_display, priority: 1 }
+  - { name: 검색,       from: /main/m2/service/mobon_search.php,  status: 301, to: /service/mobon_search,  priority: 1 }
+  - { name: PPL,        from: /main/m2/service/mobon_ppl.php,     status: 301, to: /service/mobon_ppl,     priority: 1 }
+  - { name: 인사이트,   from: /main/m2/service/mobon_insite.php,  status: 301, to: /service/mobon_insite,  priority: 1 }
+
+  # ── 파트너 상품 ──────────────────────────────────────
+  - { name: 모비튠, from: /main/m2/partner/partner_mobtune.php, status: 301, to: /partner/partner_mobtune, priority: 1 }
+
+  # ── 성공사례 ─────────────────────────────────────────
+  - { name: 성공사례 목록,       from: /main/m2/business/case.php,              status: 301, to: /business/case,              priority: 1 }
+  - { name: 성공사례 상세 sub=1,  from: "/main/m2/business/case_detail.php?sub=1",  status: 301, to: "/business/case_detail?sub=1",  priority: 1 }
+  - { name: 성공사례 상세 sub=25, from: "/main/m2/business/case_detail.php?sub=25", status: 301, to: "/business/case_detail?sub=25", priority: 2 }
+
+  # ── 운영안내 ─────────────────────────────────────────
+  - { name: 공지 목록,              from: /main/m2/support/notice_list.php,                   status: 301, to: /support/notice_list,                   priority: 1 }
+  - { name: 공지 목록 2페이지,       from: "/main/m2/support/notice_list.php?dm_page=2",        status: 301, to: "/support/notice_list?dm_page=2",        priority: 2 }
+  - { name: 공지 상세,              from: "/main/m2/support/notice_view.php?no=921",           status: 301, to: "/support/notice_view?no=921",           priority: 1, note: 광고주센터 공지 팝업이 이 주소를 연다 }
+  - { name: 공지 상세 쿼리 순서 유지, from: "/main/m2/support/notice_view.php?category=001&no=932", status: 301, to: "/support/notice_view?category=001&no=932", priority: 2 }
+  - { name: FAQ,                    from: /main/m2/support/faq.php,                           status: 301, to: /support/faq,                           priority: 1 }
+  - { name: 교육 목록,              from: /main/m2/support/edu_list.php,                      status: 301, to: /support/edu_list,                      priority: 1 }
+  - { name: 교육 상세,              from: "/main/m2/support/edu_view.php?no=884",              status: 301, to: "/support/edu_view?no=884",              priority: 1 }
+  - { name: 광고문의 안내,          from: /main/m2/support/contact_intro.php,                 status: 301, to: /support/contact_intro,                 priority: 1 }
+  - { name: 광고문의,               from: /main/m2/support/contact.php,                       status: 301, to: /support/contact,                       priority: 1 }
+  - { name: 가이드,                 from: /main/m2/support/guide.php,                         status: 301, to: /support/guide,                         priority: 1 }
+
+  # ── BLOG ────────────────────────────────────────────
+  - { name: 인사이트, from: /main/m2/blog/insight.php, status: 301, to: /blog/insight, priority: 2 }
+  - { name: 보도자료, from: /main/m2/blog/press.php,   status: 301, to: /blog/press,   priority: 2 }
+  - { name: 수상내역, from: /main/m2/blog/awards.php,  status: 301, to: /blog/awards,  priority: 2 }
+
+  # ── 회원 ────────────────────────────────────────────
+  - { name: 회원가입 1단계,        from: /main/m2/membership/join_step1.php,                    status: 301, to: /membership/join_step1,                    priority: 1 }
+  - { name: 회원가입 2단계 광고주,  from: "/main/m2/membership/join_step2.php?gubun=11",          status: 301, to: "/membership/join_step2?gubun=11",          priority: 1 }
+  - { name: 회원가입 2단계 대행사,  from: "/main/m2/membership/join_step2.php?gubun=12&grade=2",  status: 301, to: "/membership/join_step2?gubun=12&grade=2",  priority: 2 }
+  - { name: 회원가입 유입값 유지,   from: "/main/m2/membership/join_step1.php?rf=mobtive",        status: 301, to: "/membership/join_step1?rf=mobtive",        priority: 2, note: 모비티브에서 오는 링크 }
+  - { name: 아이디 찾기,           from: "/main/m2/membership/id_pw_find.php?type=id",           status: 301, to: "/membership/id_pw_find?type=id",           priority: 1, note: SSO 서버가 이 주소를 쓴다 }
+  - { name: 비밀번호 찾기,         from: "/main/m2/membership/id_pw_find.php?type=pass",         status: 301, to: "/membership/id_pw_find?type=pass",         priority: 1 }
+  - { name: 로그인(구),            from: /main/m2/membership/login.php, status: 301, to: /membership/login, final: /, priority: 1, note: "301 → /membership/login → 302 → / (2단계 이동, 의도 확인 필요)" }
+  - { name: 튠720 로그인,          from: /main/m2/membership/login_tune720.php, status: 301, to: /membership/login_tune720, priority: 2, note: tune720 서비스가 이 주소를 쓴다 }
+
+  # ── 브릿지(광고 랜딩) ────────────────────────────────
+  - { name: 브릿지 naver,       from: /bridge/naver/index.php,     status: 301, to: /bridge/naver,     priority: 1 }
+  - { name: 브릿지 naver + utm, from: "/bridge/naver/index.php?utm_source=naver&utm_medium=blog", status: 301, to: "/bridge/naver?utm_source=naver&utm_medium=blog", priority: 1, note: 광고 유입값이 빠지면 안 됨 }
+  - { name: 브릿지 google,      from: /bridge/google/index.php,    status: 301, to: /bridge/google,    priority: 2 }
+  - { name: 브릿지 google_da,   from: /bridge/google_da/index.php, status: 301, to: /bridge/google_da, priority: 2 }
+  - { name: 브릿지 sns,         from: /bridge/sns/index.php,       status: 301, to: /bridge/sns,       priority: 2 }
+  - { name: 브릿지 flexg,       from: /bridge/flexg/index.php,     status: 301, to: /bridge/flexg,     priority: 2 }
+  - { name: 브릿지 ctv,         from: /bridge/ctv/index.php,       status: 301, to: /bridge/ctv,       priority: 2 }
+  - { name: 브릿지 isend,       from: /bridge/isend/index.php,     status: 301, to: /bridge/isend,     priority: 2 }
+  - { name: 브릿지 tune720,     from: /bridge/tune720/index.php,   status: 301, to: /bridge/tune720,   priority: 2 }
+  - { name: 브릿지 marketing,   from: /bridge/marketing/index.php, status: 301, to: /bridge/marketing, priority: 2 }
+  - { name: 브릿지 aiask,       from: /bridge/aiask/index.php,     status: 301, to: /bridge/aiask,     priority: 1 }
+  - { name: 브릿지 cafe24,      from: /bridge/cafe24.php,          status: 301, to: /bridge/cafe24,    priority: 2 }
+  - { name: 브릿지 items(직접 응답), from: /bridge/items/index.php,  status: 200, priority: 2, note: 리다이렉트 없이 새 사이트가 직접 받음 }
+  - { name: 브릿지 nhnkcp(직접 응답), from: /bridge/nhnkcp/index.php, status: 200, priority: 2, note: 리다이렉트 없이 새 사이트가 직접 받음 }
+  - { name: 브릿지 naver 경로 꼬리, from: /bridge/naver/index.php/ns, status: 301, to: /bridge/naver/ns, priority: 2, note: "운영에서 실제 쓰이는 형태. 새 규칙에 없음 → 결함 후보, 기대값 확인 필요" }
+
+  # ── 쇼핑몰 플랫폼 앱 설정 ─────────────────────────────
+  - { name: cafe24 앱,   from: /v2/external/cafe24/index.php,   status: 301, to: /v2/external/cafe24,   priority: 2 }
+  - { name: godomall 앱, from: /v2/external/godomall/index.php, status: 301, to: /v2/external/godomall, priority: 2 }
+  - { name: shopby 앱,   from: /v2/external/shopby/index.php,   status: 301, to: /v2/external/shopby,   priority: 2 }
+
+  # ── 신규 주소 자체 ────────────────────────────────────
+  - { name: 신규 메인,     from: /,                    status: 200, priority: 1 }
+  - { name: 신규 공지 목록, from: /support/notice_list, status: 200, priority: 1 }
+  - { name: 신규 로그인 주소, from: /membership/login,  status: 302, to: /, priority: 2, note: 로그인은 SSO 로 바뀌어 메인으로 보냄 }
