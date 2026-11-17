@@ -98,11 +98,11 @@ def md(s):
 WRAP = 48  # 주소 칸 한 줄 최대 글자 수
 
 
-def wrap_url(url, width=WRAP):
-    """긴 주소를 / ? & 같은 끊기 좋은 자리에서 줄바꿈(<br>)한다. 표 한 칸에 다 보이게 하려는 용도."""
+def split_url(url, width=WRAP):
+    """긴 주소를 / ? & 같은 끊기 좋은 자리에서 여러 줄로 나눈다."""
     url = str(url)
     if len(url) <= width:
-        return md(url)
+        return [url]
     lines, cur = [], ""
     i = 0
     while i < len(url):
@@ -122,7 +122,28 @@ def wrap_url(url, width=WRAP):
         i = j
     if cur:
         lines.append(cur)
-    return "<br>".join(md(x) for x in lines)
+    return lines
+
+
+def wrap_url(url, width=WRAP):
+    """마크다운 표 칸용: 주소 전체를 링크 하나로 두고, 보이는 글자만 줄바꿈한다.
+    (줄마다 따로 쓰면 GitHub 가 첫 줄만 링크로 만들어 주소가 끊겨 보인다)"""
+    url = str(url)
+    if not url.startswith(("http://", "https://")):
+        return "<br>".join(md(x) for x in split_url(url, width))
+    text = "<br>".join(md(x).replace("[", "\\[").replace("]", "\\]") for x in split_url(url, width))
+    href = url.replace(" ", "%20").replace("(", "%28").replace(")", "%29").replace("|", "%7C")
+    return f"[{text}]({href})"
+
+
+def wrap_url_html(url, width=WRAP):
+    """HTML 페이지용: 주소 전체를 <a> 하나로 두고, 보이는 글자만 줄바꿈한다."""
+    from html import escape
+    url = str(url)
+    text = "<br>".join(escape(x) for x in split_url(url, width))
+    if url.startswith(("http://", "https://")):
+        return f'<a href="{escape(url, quote=True)}" target="_blank" rel="noopener">{text}</a>'
+    return text
 
 
 def short_codes(codes):
@@ -182,7 +203,7 @@ def write_html(rows, count, target, started):
     from html import escape as e
 
     def url_cell(u):
-        return wrap_url(u).replace("\\|", "|") if u else ""
+        return wrap_url_html(u) if u else ""
 
     trs = []
     for r in rows:
@@ -223,6 +244,8 @@ thead th {{ position:sticky; top:0; z-index:2; background:var(--head); text-alig
 td {{ padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top }}
 tr:last-child td {{ border-bottom:0 }}
 td.url {{ font-family:ui-monospace,Consolas,monospace; font-size:12.5px; word-break:break-all; min-width:220px }}
+td.url a {{ color:inherit; text-decoration:underline; text-decoration-color:var(--line); text-underline-offset:2px }}
+td.url a:hover {{ text-decoration-color:currentColor }}
 td.code {{ white-space:nowrap; font-variant-numeric:tabular-nums }}
 td.num {{ text-align:center; white-space:nowrap }}
 td.reason {{ color:var(--muted); font-size:12.5px; min-width:180px }}

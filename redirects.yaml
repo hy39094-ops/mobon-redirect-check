@@ -60,7 +60,6 @@ cases:
   # ── 브릿지(광고 랜딩) ────────────────────────────────
   - { sheet_no: 61, name: 프로모션 브릿지(www), from: "https://www.web-master.mobon.net/bridge/marketing/?utm_source=naver&utm_medium=bs&utm_campaign=brand_ad_2_pc&utm_content=news", status: 200, final: "https://web-master.mobon.net/bridge/marketing/?utm_source=naver&utm_medium=bs&utm_campaign=brand_ad_2_pc&utm_content=news", priority: 2, note: "www.web-master 는 실서버와 같은 서버로 연결됨(3번과 같은 원인). 새 사이트 브릿지로 가야 하는지 확인 필요" }
   - { sheet_no: 63, name: 브릿지,              from: https://web-master.mobon.net/bridge,  status: 200, priority: 1 }
-  - { sheet_no: 64, name: AI ASK 브릿지(시트 주소), from: https://web-master.mobon.net/aiask,     status: 200, priority: 2, note: "실제 페이지는 /bridge/aiask 로 보임. 시트 주소 확인 필요" }
-  - { sheet_no: 65, name: 마케팅 브릿지(시트 주소), from: https://web-master.mobon.net/marketing, status: 200, priority: 2, note: "실제 페이지는 /bridge/marketing 으로 보임. 시트 주소 확인 필요" }
   - { name: AI ASK 브릿지,   from: https://web-master.mobon.net/bridge/aiask,     status: 200, priority: 1 }
   - { name: 마케팅 브릿지,   from: https://web-master.mobon.net/bridge/marketing, status: 200, priority: 1 }
+  - { name: AI ASK 브릿지(실서버), from: https://www.mobon.net/bridge/aiask, status: 301, final: https://www.mobon.net/bridge/aiask/, priority: 1, note: "실서버 주소. 랜딩 페이지는 끝에 / 가 붙은 https://www.mobon.net/bridge/aiask/" }
