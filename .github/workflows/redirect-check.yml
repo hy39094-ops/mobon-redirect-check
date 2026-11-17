@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       base_url:
-        description: "검사할 사이트 주소 (예: https://www.mobon.net)"
+        description: "검사할 사이트 주소 (테스트: https://web-master.mobon.net / 전환 후: https://www.mobon.net)"
         required: true
-        default: "https://www.mobon.net"
+        default: "https://web-master.mobon.net"
       priority:
         description: "이 등급 이하만 실행 (1 / 2 / 3)"
         required: true
@@ -27,7 +27,7 @@ jobs:
     timeout-minutes: 5
     env:
       # 자동 실행 때는 저장소 변수(Settings > Secrets and variables > Actions > Variables)의 값을 쓴다
-      BASE_URL: ${{ inputs.base_url || vars.BASE_URL || 'https://www.mobon.net' }}
+      BASE_URL: ${{ inputs.base_url || vars.BASE_URL || 'https://web-master.mobon.net' }}
       PRIORITY: ${{ inputs.priority || vars.PRIORITY || '1' }}
     steps:
       - uses: actions/checkout@v4
