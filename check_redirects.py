@@ -95,6 +95,41 @@ def md(s):
     return str(s).replace("|", "\\|").replace("\n", " ")
 
 
+WRAP = 48  # 주소 칸 한 줄 최대 글자 수
+
+
+def wrap_url(url, width=WRAP):
+    """긴 주소를 / ? & 같은 끊기 좋은 자리에서 줄바꿈(<br>)한다. 표 한 칸에 다 보이게 하려는 용도."""
+    url = str(url)
+    if len(url) <= width:
+        return md(url)
+    lines, cur = [], ""
+    i = 0
+    while i < len(url):
+        # 다음 끊는 자리까지의 조각
+        j = i + 1
+        while j < len(url) and url[j] not in "/?&":
+            j += 1
+        piece = url[i:j]
+        if cur and len(cur) + len(piece) > width:
+            lines.append(cur)
+            cur = ""
+        while len(piece) > width:  # 끊을 자리 없이 너무 긴 조각은 강제로 자른다
+            lines.append(cur + piece[: width - len(cur)])
+            piece = piece[width - len(cur):]
+            cur = ""
+        cur += piece
+        i = j
+    if cur:
+        lines.append(cur)
+    return "<br>".join(md(x) for x in lines)
+
+
+def short_codes(codes):
+    """'301 → 200' 처럼 숫자만 남긴다. 접속 오류 같은 긴 문구는 'ERR' 로 줄인다."""
+    return " → ".join("ERR" if str(c).startswith("ERR") else str(c) for c in str(codes).split(" → "))
+
+
 def write_report(rows, count, target, started):
     """시트 형태의 결과 문서(report.md)를 만들고, GitHub Actions 에서는 실행 화면 Summary 에도 붙인다."""
     icon = {"PASS": "✅ PASS", "WARN": "⚠️ WARN", "FAIL": "❌ FAIL"}
@@ -106,17 +141,28 @@ def write_report(rows, count, target, started):
         f"- 결과: **PASS {count['PASS']} / WARN {count['WARN']} / FAIL {count['FAIL']}** (총 {len(rows)}건)",
         "- 판정: 도착 페이지가 4xx·5xx·접속 오류면 FAIL, 정상 도착했지만 기대 주소와 다르면 WARN",
         "",
-        "| No. | 등급 | 접속 주소 (Test step) | 기대 결과 (이동할 주소) | 응답 코드 흐름 | 실제 도착 주소 | 기대 주소로 이동 | 결과 | 비고 |",
-        "|---|---|---|---|---|---|---|---|---|",
+        "| 결과 | No. | 접속 주소 | 기대 결과 | 응답 코드 | 실제 도착 주소 | 기대 주소로 이동 |",
+        "|---|---|---|---|---|---|---|",
     ]
     for r in rows:
         moved = "-" if not r["expected"] else ("O" if r["result"] == "PASS" else "X")
-        note = "; ".join(x for x in (r["problem"], r["note"]) if x)
-        lines.append("| " + " | ".join(md(x) for x in (
-            r["no"], r["priority"], r["from"], r["expected"] or "(정상 응답)", r["path"],
-            r["final_url"], moved, icon[r["result"]], note,
+        lines.append("| " + " | ".join((
+            icon[r["result"]],
+            md(r["no"]),
+            wrap_url(r["from"]),
+            wrap_url(r["expected"]) if r["expected"] else "(정상 응답)",
+            md(short_codes(r["codes"])),
+            wrap_url(r["final_url"]),
+            moved,
         )) + " |")
-    lines += ["", "응답 코드 흐름 예: `301 → /support/notice_list → 200` = 처음 301 로 /support/notice_list 로 이동했고, 거기서 200 응답"]
+
+    issues = [r for r in rows if r["result"] != "PASS"]
+    if issues:
+        lines += ["", "## 확인 필요 (WARN / FAIL 사유)", ""]
+        for r in issues:
+            head = f"No.{r['no']} " if r["no"] else ""
+            lines.append(f"- **{r['result']}** {head}{md(r['name'])}: {md(r['problem'])}")
+    lines += ["", "응답 코드 예: `301 → 200` = 처음 301 로 이동한 뒤 도착 페이지에서 200"]
     text = "\n".join(lines) + "\n"
     out = Path(__file__).with_name("report.md")
     out.write_text(text, encoding="utf-8")
@@ -199,6 +245,7 @@ def main():
             "location": loc,
             "final_status": fcode,
             "final_url": furl,
+            "codes": codes,
             "path": path,
             "expected": final or to or "",
             "problem": "; ".join(problems),
