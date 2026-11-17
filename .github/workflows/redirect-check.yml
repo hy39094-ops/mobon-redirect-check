@@ -21,21 +21,31 @@ concurrency:
   group: redirect-check
   cancel-in-progress: false
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    outputs:
+      failed: ${{ steps.run.outcome == 'failure' }}
     env:
       # 자동 실행 때는 저장소 변수(Settings > Secrets and variables > Actions > Variables)의 값을 쓴다
       BASE_URL: ${{ inputs.base_url || vars.BASE_URL || 'https://web-master.mobon.net' }}
-      PRIORITY: ${{ inputs.priority || vars.PRIORITY || '1' }}
+      PRIORITY: ${{ inputs.priority || vars.PRIORITY || '3' }}
+      REPORT_PAGE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
-      - run: python check_redirects.py --base-url "$BASE_URL" --priority "$PRIORITY"
+      - id: run
+        continue-on-error: true
+        run: python check_redirects.py --base-url "$BASE_URL" --priority "$PRIORITY"
       - if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -43,4 +53,33 @@ jobs:
           path: |
             report.md
             result.csv
+            site/index.html
           retention-days: 3
+      - if: always()
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  # 결과 페이지를 GitHub Pages 에 올린다 (Settings > Pages > Source: GitHub Actions 필요)
+  publish:
+    needs: check
+    if: always()
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
+  # FAIL 이 있었으면 마지막에 실패로 표시 (페이지는 먼저 올린다)
+  verdict:
+    needs: [check, publish]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - if: needs.check.outputs.failed == 'true'
+        run: |
+          echo "FAIL 항목이 있습니다. Summary 또는 결과 페이지를 확인하세요."
+          exit 1
+      - run: echo "FAIL 없음"
